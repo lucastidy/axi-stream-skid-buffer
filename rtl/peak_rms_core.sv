@@ -33,7 +33,7 @@ module peak_rms_core #(parameter DATA_WIDTH = 16)(
     assign tready = 1'b1;
 
     always_ff @(posedge clk) begin
-        if(!rst_n) begin
+        if (!rst_n) begin
             peak_accum <= '0;
             square_accum <= '0;
             sample_count <= '0;
@@ -41,18 +41,30 @@ module peak_rms_core #(parameter DATA_WIDTH = 16)(
             rms_reg <= '0;
             peak_exceeded <= 1'b0;
             rms_exceeded <= 1'b0;
-
-        end else if(tvalid && tready) begin
+        end else if (tvalid && tready) begin
             logic [DATA_WIDTH-1:0] abs_samp;
+
             abs_samp = (tdata < 0) ? -tdata : tdata; // get abs of sample
-            if($signed(abs_samp) > $signed(peak_reg)) begin
-                peak_reg <= $signed(abs_samp); // update peak if larger
-                peak_exceeded <= (peak_reg > threshold_peak);
+            if ($signed(abs_samp) > $signed(peak_reg)) begin
+                abs_samp = $signed(abs_samp); // update peak if larger
+                peak_exceeded <= (abs_samp > threshold_peak);
+                peak_reg <= abs_samp;
             end
+            // accumulate square for RMS
             square_accum <= square_accum + $signed(tdata * tdata);
             sample_count <= sample_count + 1;
+            if (tlast) begin
+                // end of frame, compute RMS and reset accumulators
+                logic [DATA_WIDTH-1:0] rms_temp;
+                rms_temp = $signed($sqrt(square_accum / sample_count));
+                rms_reg <= rms_temp;
+                rms_exceeded <= (rms_temp > threshold_rms);
+                // reset accumulators for next frame
+                square_accum <= '0;
+                peak_accum <= '0;
+                sample_count <= '0;
+            end
         end
     end
-
 
 endmodule
