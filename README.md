@@ -1,12 +1,10 @@
-# AXI-Stream Audio Peak/RMS Analyzer
-This project takes a stream of audio samples, computes per-frame peak and RMS, raises an IRQ if clipping or RMS exceeds a CSR-programmable limit, using SystemVerilog.
+# AXI-Stream Skid Buffer - RTL Design and Verification
+This project implements and verifies a 1-deep skid buffer for an AXI-Stream–style valid/ready interface. The buffer absorbs short downstream backpressure events without data loss and preserves packet boundaries, enabling timing decoupling between streaming pipeline stages.
 
+The design is verified using a UVM-style, constrained-random SystemVerilog testbench with assertion-based checks and coverage-driven stimulus refinement.
 ## Features
 
-- AXI-Stream input interface (16-bit signed samples)
-- Real-time peak and RMS calculation
-- Programmable peak/RMS thresholds
-- Interrupt output on threshold exceed
+- AXI-Stream input interface (32-bit signed samples)
 - RTL + UVM-style testbench with:
   - Constrained-random stimulus
   - Scoreboard comparison
@@ -14,20 +12,17 @@ This project takes a stream of audio samples, computes per-frame peak and RMS, r
   - Protocol and behavioral SVA assertions
 
 ## Repo Structure
-
-- `rtl/`: Design logic
-- `tb/`: Testbench components
-- `assertions/`: SystemVerilog assertions
-- `coverage/`: Functional coverage bins
-- `sim/`: Scripts for running simulations
+- `proj/` Project source code
+- `proj/rtl/`: Design logic
+- `proj/tb/`: Testbench components
+- `proj/wav_simulator/`: Script for running simulations
 - `docs/`: Block diagrams and design notes
-- `scripts/`: Python/MATLAB DSP models
 
-## Running Simulation
+## Running Simulation in Questa
 
 ```bash
-# Compile
-vlog -f sim/compile.f
-# Simulate
-vsim -do sim/run_modelsim.do
+# Compile (from proj/)
+vlog -sv rtl/skid_buffer.sv tb/tb_top.sv
+# sim 
+vsim -do wav_simulator/run.do
 ```
